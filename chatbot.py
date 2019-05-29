@@ -3,13 +3,13 @@ import argparse
 import http.client
 import urllib.parse
 from typing import Tuple, List
-
 from werkzeug.wrappers import Request, Response
 
 
 SERVER_URL = "localhost"
 CLIENT_URL = "localhost"
 PORT = 8080
+
 
 class MessageHistory:
     def __init__(self):
@@ -29,6 +29,7 @@ class MessageHistory:
         else:
             return [], -1
 
+
 g_message_history = MessageHistory()
 
 
@@ -36,7 +37,7 @@ g_message_history = MessageHistory()
 def application(request):
     global g_message_history
 
-    print("Get request", request)
+    print("Got request", request)
     if request.method == 'POST':
         if request.path == "/send" and request.content_type == "application/json":
             response_str = "Message received and being processed"
@@ -47,12 +48,17 @@ def application(request):
             response_str = "Unknown POST format"
     elif request.method == 'GET':
         if request.path == "/messages":
-            messages, last_seen = g_message_history.get_messages_rest("Dmitrii", -1)
-            messages_dict = {'messages': messages, 'last_seen': last_seen}
-            messages_json = json.dumps(messages_dict)
-            response_str = messages_json
+            if 'user' in request.values and 'last_seen' in request.values:
+                user = request.values['user']
+                last_seen = int(request.values['last_seen'])
+                messages, new_last_seen = g_message_history.get_messages_rest(user, last_seen)
+                messages_dict = {'messages': messages, 'last_seen': new_last_seen}
+                messages_json = json.dumps(messages_dict)
+                response_str = messages_json
+            else:
+                response_str = "Wrong format of urlencoded"
         else:
-            response_str = "REST responses from the bot will be here"
+            response_str = "404"
     else:
         response_str = ""
         print("Have no idea what to do with this request")
@@ -68,32 +74,41 @@ def launch_server():
 
 
 class BotClient:
-    def __init__(self):
+    def __init__(self, user_name):
         print("Launching client")
+        self._user_name = user_name
         self._conn = http.client.HTTPConnection(CLIENT_URL + ":" + str(PORT))
+        self._last_seen = None
 
     def fetch_messages(self):
+        last_seen = self._last_seen if self._last_seen is not None else -1
         try:
-            self._conn.request("GET", "/messages")
-            r1 = self._conn.getresponse()
-            print(r1.status, r1.reason)
-            data1 = r1.read()
-            print(data1)
+            params = urllib.parse.urlencode({
+                'user': self._user_name,
+                'last_seen': last_seen
+            })
+            headers = {
+                "Content-type": "application/x-www-form-urlencoded",
+                "Accept": "text/plain"
+            }
+            self._conn.request("GET", "/messages", params, headers)
+            response = self._conn.getresponse()
+            #print(response.status, response.reason)
+            json_str = response.read()
+            messages_dict = json.loads(json_str)
+            print(messages_dict)
+            if 'messages' in messages_dict and 'last_seen' in messages_dict:
+                for message in messages_dict['messages']:
+                    print("Bot:", message)
+                self._last_seen = messages_dict['last_seen']
+            else:
+                pass
+
         except:
             print("Cannot connect")
 
-    def send_message_example(self, message):
-        params = urllib.parse.urlencode({'@number': 12524, '@type': 'issue', '@action': 'show'})
-        headers = {"Content-type": "application/x-www-form-urlencoded",
-                   "Accept": "text/plain"}
-        self._conn.request("POST", "/send", params, headers)
-        response = self._conn.getresponse()
-        print(response.status, response.reason)
-        data = response.read()
-        print(data)
-
-    def send_message(self, user: str, message: str):
-        content_obj = {'user': user, 'message': message}
+    def send_message(self, message: str):
+        content_obj = {'user': self._user_name, 'message': message}
         content = json.dumps(content_obj)
         headers = {"Content-type": "application/json",
                    "Accept": "text/plain"}
@@ -101,7 +116,7 @@ class BotClient:
         try:
             self._conn.request("POST", "/send", content, headers)
             response = self._conn.getresponse()
-            print(response.status, response.reason)
+            #print(response.status, response.reason)
             data = response.read()
             print(data)
         except:
@@ -112,11 +127,13 @@ class BotClient:
 
 
 def launch_client():
-    bc = BotClient()
+    import time
+    time.sleep(0.5)
+    bc = BotClient("Dmitrii")
     bc.fetch_messages()
-    bc.send_message("Dmitrii", "I am so happy!")
+    bc.send_message("I am so happy!")
     bc.fetch_messages()
-    bc.send_message("Dmitrii", "And again happy!")
+    bc.send_message("And again happy!")
     bc.fetch_messages()
     pass
 
