@@ -1,9 +1,12 @@
 import json
+import emoji
 import argparse
 import http.client
 import urllib.parse
 from typing import Tuple, List
 from werkzeug.wrappers import Request, Response
+
+from sentiment import Sentiment
 
 
 SERVER_URL = "localhost"
@@ -31,6 +34,7 @@ class MessageHistory:
 
 
 g_message_history = MessageHistory()
+g_sentiment = Sentiment()
 
 
 @Request.application
@@ -43,7 +47,17 @@ def application(request):
             response_str = "Message received and being processed"
             message_dict = json.loads(request.data)
             print(message_dict)
-            g_message_history.append_message(message_dict['user'], message_dict['message'])
+
+            user = message_dict['user']
+            message = message_dict['message']
+
+            g_message_history.append_message(message_dict['user'], message)
+
+            bot_reply = g_sentiment(message)
+            emoji_str = ":happy:" if bot_reply else ":sad:"
+            bot_emoji = emoji.emojize(emoji_str)
+            bot_reply_full = f"[BOT] {bot_emoji}"
+            g_message_history.append_message(user, bot_reply_full)
         else:
             response_str = "Unknown POST format"
     elif request.method == 'GET':
@@ -132,6 +146,8 @@ def launch_client():
     bc = BotClient("Dmitrii")
     bc.fetch_messages()
     bc.send_message("I am so happy!")
+    bc.fetch_messages()
+    bc.send_message("I am sad")
     bc.fetch_messages()
     bc.send_message("And again happy!")
     bc.fetch_messages()

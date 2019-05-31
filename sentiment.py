@@ -66,13 +66,13 @@ class Sentiment:
 
         top_emoji = [self._emoji_codes[str(i)] for i in top]
 
-        print(message)
-        print(top_emoji)
-        print(" ".join([emoji.emojize(e, use_aliases=True) for e in top_emoji]))
+        #print(message)
+        #print(top_emoji)
+        #print(" ".join([emoji.emojize(e, use_aliases=True) for e in top_emoji]))
         votes = [self._sentiments[str(e)] for e in top]
-        votes_str = [str(v) for v in votes]
-        print(" ".join(votes_str))
+        #votes_str = [str(v) for v in votes]
+        #print(" ".join(votes_str))
         result = majority_vote(votes)
-        print(result)
+        #print(result)
 
         return result
