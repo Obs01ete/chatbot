@@ -1,17 +1,15 @@
 import os
 import sys
 import json
-import time
 import emoji
-from typing import List
 import numpy as np
+from typing import List
 
 TORCHMOJI_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "torchMoji")
 sys.path.insert(0, TORCHMOJI_PATH)
 
 from torchMoji.torchmoji.global_variables import (
     PRETRAINED_PATH,
-    NB_TOKENS,
     VOCAB_PATH,
     ROOT_PATH
     )
@@ -64,15 +62,11 @@ class Sentiment:
 
         top = top_elements(prob, self._top_n_predictions)
 
-        top_emoji = [self._emoji_codes[str(i)] for i in top]
+        if False:
+            top_emoji = [self._emoji_codes[str(i)] for i in top]
+            print(" ".join([emoji.emojize(e, use_aliases=True) for e in top_emoji]))
 
-        #print(message)
-        #print(top_emoji)
-        #print(" ".join([emoji.emojize(e, use_aliases=True) for e in top_emoji]))
         votes = [self._sentiments[str(e)] for e in top]
-        #votes_str = [str(v) for v in votes]
-        #print(" ".join(votes_str))
         result = majority_vote(votes)
-        #print(result)
 
         return result
