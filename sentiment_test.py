@@ -4,6 +4,7 @@ import sentiment
 
 
 class SentimentTest(unittest.TestCase):
+
     def test_sentiment(self):
         sentiment_analyser = sentiment.Sentiment()
 

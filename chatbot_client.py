@@ -6,7 +6,16 @@ import urllib.parse
 
 
 class BotClient:
+    """ Class to POST user messages to the bot and fetch answers via REST. """
+
     def __init__(self, user_name: str, hostname: str, port: int):
+        """
+        Ctor.
+        :param user_name: name of the user (case sensitive)
+        :param hostname: host name
+        :param port: port
+        """
+
         print("Launching client")
         print(f"Logging in as {user_name}")
         self._user_name = user_name
@@ -14,6 +23,8 @@ class BotClient:
         self._last_seen = None
 
     def fetch_messages(self):
+        """ Fetch all the messages from chat history and print them to console. """
+
         last_seen = self._last_seen if self._last_seen is not None else -1
         try:
             params = urllib.parse.urlencode({
@@ -38,7 +49,12 @@ class BotClient:
         except:
             print("Cannot connect")
 
-    def send_message(self, message: str):
+    def send_message(self, message: str) -> None:
+        """
+        Send a user message via JSON over POST.
+        :param message: message string
+        """
+
         content_obj = {'user': self._user_name, 'message': message}
         content = json.dumps(content_obj)
         headers = {"Content-type": "application/json",
@@ -56,6 +72,10 @@ class BotClient:
 
 
 def launch_client(args):
+    """
+    Asks for console input (new-line terminated) and displays bot's answers.
+    Press Ctrl-C to exit.
+    """
 
     bc = BotClient(args.user, args.hostname, args.port)
 

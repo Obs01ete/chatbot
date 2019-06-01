@@ -8,16 +8,31 @@ from sentiment import Sentiment
 
 
 class MessageHistory:
+    """
+    Class-emulation of a database that stores message history.
+    """
+
     def __init__(self):
         self._history = {}
 
-    def append_message(self, user: str, message: str):
+    def append_message(self, user: str, message: str) -> None:
+        """
+        Append a message from a user or a bot to user's history.
+        :param user: user name
+        :param message: message to add
+        """
         if user in self._history:
             self._history[user].append(message)
         else:
             self._history[user] = [message]
 
     def get_messages_rest(self, user, last_seen) -> Tuple[List[str], int]:
+        """
+        Acquire all messages after last_seen
+        :param user: user name
+        :param last_seen: last seen index of a message
+        :return: list of messaged and the latest message index
+        """
         if user in self._history:
             user_messages = self._history[user]
             messages = user_messages[last_seen+1:]
@@ -26,16 +41,27 @@ class MessageHistory:
             return [], -1
 
 
+""" Singleton for in-RAM storage of all users' chat histories. """
 g_message_history = MessageHistory()
+
+""" Sentiment analysis neural network. """
 g_sentiment = Sentiment()
 
 
 @Request.application
 def application(request):
+    """
+    Werkzeug application to process web requests.
+    :param request: inbound HTTP request
+    :return: Response object
+    """
+
     global g_message_history
 
     print("Got request", request)
     if request.method == 'POST':
+        """ This section parses a chat message sent by user. """
+
         if request.path == "/send" and request.content_type == "application/json":
             response_str = "Message received and being processed"
             message_dict = json.loads(request.data)
@@ -44,16 +70,23 @@ def application(request):
             user = message_dict['user']
             message = message_dict['message']
 
+            # Original user message is added to message history
             g_message_history.append_message(message_dict['user'], message)
 
+            # Neural network inference
             bot_reply = g_sentiment(message)
+            # Transform bool happiness value into a Unicode smiley
             emoji_str = ":smiley:" if bot_reply else ":worried:"
             bot_emoji = emoji.emojize(emoji_str, use_aliases=True)
+            # Messages by bot are marked with [BOT] prefix
             bot_reply_full = f"[BOT] {bot_emoji} ({emoji_str})"
             g_message_history.append_message(user, bot_reply_full)
         else:
             response_str = "Unknown POST format"
+
     elif request.method == 'GET':
+        """ This section is a REST responder for quieries of chat history. """
+
         if request.path == "/messages":
             if 'user' in request.values and 'last_seen' in request.values:
                 user = request.values['user']
@@ -75,6 +108,7 @@ def application(request):
 
 
 def launch_server(args):
+    """ Launches werkzeug server. """
     print("Launching sever")
     from werkzeug.serving import run_simple
     run_simple(args.hostname, args.port, application)
