@@ -30,15 +30,17 @@ Create conda (or any other) environment:
 
 `conda create -n chatbot_env python=3.6`
 
+`source activate chatbot_env`
+
 Install requirements. An old PyTorch version 0.3.1 is used.
 
 `pip install -r requirements.txt`
 
-In one terminal launch server:
+In one terminal, launch server:
 
 `python chatbot_server.py`
 
-In another terminal:
+In another terminal, launch a console client:
 
 `python chatbot_client.py`
 
@@ -68,4 +70,14 @@ To post a message:
 `POST localhost:8080/send {"user":"Dmitrii","message":"Good job!"}`
 
 The message will be processed by the bot and a response can be acquired via REST.
+
+## How to run tests
+
+To test torchMoji wrapper:
+
+`python sentiment_test.py`
+
+To test web server:
+
+`python chatbot_server_test.py`
 

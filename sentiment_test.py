@@ -25,3 +25,7 @@ class SentimentTest(unittest.TestCase):
         for sentence, expected_sentiment in zip(test_sentences, expected_sentiments):
             sentim = sentiment_analyser(sentence)
             self.assertEqual(sentim, expected_sentiment)
+
+
+if __name__ == "__main__":
+    unittest.main()
