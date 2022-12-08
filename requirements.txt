@@ -1,4 +1,4 @@
-certifi==2019.3.9
+certifi==2022.12.7
 emoji==0.5.2
 joblib==0.13.2
 numpy==1.16.4
